@@ -125,11 +125,9 @@ def add_warehouse() -> None:
         is_central = YesNoValidator.is_yes(user_input)
 
         if is_central:
-            answer = prompt("Уже есть центральный склад. Сделать новый центральным? (y/n): ", validator=YesNoValidator()).strip()
-            if YesNoValidator.is_yes(answer):
-                conn.execute("UPDATE catalog.warehouses SET is_central = FALSE WHERE is_central = TRUE")
-            else:
-                is_central = False
+            conn.execute("UPDATE catalog.warehouses SET is_central = FALSE WHERE is_central = TRUE")
+        else:
+            is_central = False
 
     conn.execute(
         "INSERT INTO catalog.warehouses (city, address, label, is_central) VALUES (%s, %s, %s, %s)",

@@ -9,7 +9,7 @@ from rich.panel import Panel
 
 from console import console, render_error
 from db import get_conn
-from validators import PriceValidator, NonEmptyValidator, YesNoValidator, PositiveIntValidator
+from validators import PriceValidator, NonEmptyValidator, YesNoValidator, PositiveIntValidator, ChoiceValidator
 from commands import command, CATEGORY_PRODUCTS
 
 
@@ -155,8 +155,17 @@ def add_product() -> None:
     name = prompt("Название: ", validator=NonEmptyValidator()).strip()
     price_text = prompt("Цена: ", validator=PriceValidator()).strip()
     price = Decimal(price_text) if price_text else None
-    category_id_text = prompt("ID категории продукта: ", validator=PositiveIntValidator()).strip()
-    category_id = int(category_id_text)
+    with conn.cursor(row_factory=class_row(ProductCategory)) as cur:
+        cur.execute("SELECT * FROM catalog.product_categories ORDER BY id")
+        cats: list[ProductCategory] = cur.fetchall()
+
+    if not cats:
+        render_error("Нет категорий. Сначала добавьте категорию")
+        return
+
+    choices = [f"{c.id} - {c.category_name}" for c in cats]
+    category_choice = prompt("Категория: ", validator=ChoiceValidator(choices)).strip()
+    category_id = int(category_choice.split(" ")[0])
 
     conn.execute("INSERT INTO catalog.products (sku, name, price, category_id) VALUES (%s, %s, %s, %s)", (sku, name, price, category_id))
     console.print(f"[green]Товар '{name}' добавлен[/green]")
@@ -177,10 +186,21 @@ def edit_product(_id: str) -> None:
     name = prompt("Название: ", default=product.name, validator=NonEmptyValidator()).strip()
     price_text = prompt("Цена: ", default=(str(product.price) if product.price is not None else ""), validator=PriceValidator()).strip()
     price = Decimal(price_text) if price_text else None
-    category_id_text = prompt("ID категории продукта: ", default=(str(product.category_id)), validator=PositiveIntValidator()).strip()
-    category_id = int(category_id_text)
 
-    conn.execute("UPDATE catalog.products SET sku = %s, name = %s, price = %s, category_id = %s, WHERE id = %s", (sku, name, price, category_id, _id))
+    with conn.cursor(row_factory=class_row(ProductCategory)) as cur:
+        cur.execute("SELECT * FROM catalog.product_categories ORDER BY id")
+        cats: list[ProductCategory] = cur.fetchall()
+
+    if not cats:
+        render_error("Нет категорий. Сначала добавьте категорию")
+        return
+
+    choices = [f"{c.id} - {c.category_name}" for c in cats]
+    default_choice = next((f"{c.id} - {c.category_name}" for c in cats if c.id == product.category_id), choices[0])
+    category_choice = prompt("Категория: ", default=default_choice, validator=ChoiceValidator(choices)).strip()
+    category_id = int(category_choice.split(" ")[0])
+
+    conn.execute("UPDATE catalog.products SET sku = %s, name = %s, price = %s, category_id = %s WHERE id = %s", (sku, name, price, category_id, _id))
     console.print(f"[green]Товар #{_id} обновлен[/green]")
 
 
