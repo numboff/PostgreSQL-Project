@@ -19,6 +19,7 @@ class Product:
     sku: str
     name: str
     price: Decimal
+    category_id: int
 
 
 @dataclass
@@ -153,8 +154,10 @@ def add_product() -> None:
     name = prompt("Название: ", validator=NonEmptyValidator()).strip()
     price_text = prompt("Цена: ", validator=PriceValidator()).strip()
     price = Decimal(price_text) if price_text else None
+    category_id_text = prompt("ID категории продукта: ", validator=PositiveIntValidator()).strip()
+    category_id = int(product_category_text)
 
-    conn.execute("INSERT INTO catalog.products (sku, name, price) VALUES (%s, %s, %s)", (sku, name, price))
+    conn.execute("INSERT INTO catalog.products (sku, name, price, category_id) VALUES (%s, %s, %s, %s)", (sku, name, price, category_id))
     console.print(f"[green]Товар '{name}' добавлен[/green]")
 
 
@@ -173,8 +176,10 @@ def edit_product(_id: str) -> None:
     name = prompt("Название: ", default=product.name, validator=NonEmptyValidator()).strip()
     price_text = prompt("Цена: ", default=(str(product.price) if product.price is not None else ""), validator=PriceValidator()).strip()
     price = Decimal(price_text) if price_text else None
+    category_id_text = prompt("ID категории продукта: ", default=(str(product.category_id)), validator=PositiveIntValidator()).strip()
+    category_id = int(category_id_text)
 
-    conn.execute("UPDATE catalog.products SET sku = %s, name = %s, price = %s WHERE id = %s", (sku, name, price, _id))
+    conn.execute("UPDATE catalog.products SET sku = %s, name = %s, price = %s, category_id = %s, WHERE id = %s", (sku, name, price, category_id, _id))
     console.print(f"[green]Товар #{_id} обновлен[/green]")
 
 
