@@ -156,7 +156,7 @@ def add_product() -> None:
     price_text = prompt("Цена: ", validator=PriceValidator()).strip()
     price = Decimal(price_text) if price_text else None
     category_id_text = prompt("ID категории продукта: ", validator=PositiveIntValidator()).strip()
-    category_id = int(product_category_text)
+    category_id = int(category_id_text)
 
     conn.execute("INSERT INTO catalog.products (sku, name, price, category_id) VALUES (%s, %s, %s, %s)", (sku, name, price, category_id))
     console.print(f"[green]Товар '{name}' добавлен[/green]")
