@@ -9,7 +9,7 @@ from rich.panel import Panel
 
 from console import console, render_error
 from db import get_conn
-from validators import PriceValidator, NonEmptyValidator, YesNoValidator
+from validators import PriceValidator, NonEmptyValidator, YesNoValidator, PositiveIntValidator
 from commands import command, CATEGORY_PRODUCTS
 
 
@@ -121,7 +121,8 @@ def list_products() -> None:
     table.add_column("ID", style="dim", width=6, justify="right")
     table.add_column("SKU", style="green", min_width=10)
     table.add_column("Название", style="yellow", min_width=20)
-    table.add_column("Цена", style="magenta", min_width=10, justify="right")
+    table.add_column("Цена", style="magenta", min_width=10)
+    table.add_column("ID категории продукта", style="dim", width=10, justify="right")
 
     with conn.cursor(row_factory=class_row(Product)) as cur:
         cur.execute("SELECT * FROM catalog.products ORDER BY id")
@@ -129,7 +130,7 @@ def list_products() -> None:
 
     for p in rows:
         price_str = f"{p.price:.2f}" if p.price is not None else ""
-        table.add_row(str(p.id), p.sku, p.name, price_str)
+        table.add_row(str(p.id), p.sku, p.name, price_str, str(p.category_id))
     console.print(table)
 
 
